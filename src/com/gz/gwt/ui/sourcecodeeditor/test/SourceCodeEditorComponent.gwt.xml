@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module rename-to='sourcecodeeditorcomponent'>
+  <inherits name="com.google.gwt.user.User" />
+	<inherits name="com.gz.gwt.ui.sourcecodeeditor.SourceCodeEditor" />
+
+	<source path="client" />
+
+	<entry-point class='com.gz.gwt.ui.sourcecodeeditor.test.client.SourceCodeEditorComponent'/>
+
+</module>
+
