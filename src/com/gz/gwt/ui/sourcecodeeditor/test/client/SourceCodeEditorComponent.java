@@ -4,40 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
-import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor;
-import com.gz.gwt.ui.sourcecodeeditor.client.event.ChangeCallbackEvent;
-import com.gz.gwt.ui.sourcecodeeditor.client.event.ChangeCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EALoadCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EALoadCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.LoadCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.LoadCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.SaveCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.SaveCallbackHandler;
+import com.gz.gwt.ui.sourcecodeeditor.client.type.FileInfo;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -50,10 +33,10 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		main.setWidth("100%");
 		// Creation of the header
 		HTML header = new HTML();
-		header.setHTML("<h2>EditArea examples</h2>" +
-				"<p>Retrieve EditArea on <a href='http://sourceforge.net/projects/editarea'>sourceforge</a> or on" +
-				"Christophe Dolivet <a href='http://www.cdolivet.com/index.php?page=editArea'>website</a>." +
-				"</p>");
+		header.setHTML("<h1>GWT-EditArea Library Demo</h1>" +
+				"<p>Demo for <a href='https://github.com/gzussa/gwt-editarea/'>GWT-EditArea</a> widget.</p>" +
+				"<p>GWT-EditArea is a GWT widget for editing texts with source code highlights, based on the javascript library EditArea from Christophe Dolivet. (<a href='http://www.cdolivet.com/editarea/'>http://www.cdolivet.com/editarea/</a>).<p>" +
+				"<p>This Demo is based on the <a href='http://www.cdolivet.com/editarea/editarea/exemples/exemple_full.html'>original demo</a> for the Javascript library</p>");
 		main.add(header);
 		
 		// Creation of the four examples groupBox
@@ -76,12 +59,6 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		example4.setCaptionText("Example 4");
 		initExample4(example4);
 		main.add(example4);
-		
-		CaptionPanel example5 = new CaptionPanel();
-		example5.setCaptionText("Example 5");
-		initExample5(example5);
-		main.add(example5);
-		
 
 		//Attachment of the layout on the webpage
 		RootPanel.get().add(main);
@@ -170,7 +147,7 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		
 		Button b_editor1_getSelectedRange = new Button("getSelectionRange", new ClickHandler(){
 			public void onClick(ClickEvent event) {
-				Map sel = editor1.getSelectionRange();
+				Map<String, Integer> sel = editor1.getSelectionRange();
 				Window.alert(("start: "+sel.get("start")+"\nend: "+sel.get("end")));
 			}
 		});
@@ -206,15 +183,11 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		
 		Button b_editor1_readonlymode = new Button("Toggle readonly mode", new ClickHandler(){
 			public void onClick(ClickEvent event) {
-				_toggle_readonly_mode(editor1.getId());
+				editor1.toggleEditable();
 			}
 		});
 		fpExample1.add(b_editor1_readonlymode);
 	}
-	
-	private static native void _toggle_readonly_mode(String id)/*-{
-		$wnd.editAreaLoader.execCommand(id, 'set_editable', !$wnd.editAreaLoader.execCommand(id, 'is_editable'));
-	}-*/;
 	
 	private void initExample2(CaptionPanel example2){
 		VerticalPanel vpExemple2 = new VerticalPanel();
@@ -254,9 +227,8 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		editor2.addEALoadCallbackHandler(new EALoadCallbackHandler(){
 			@Override
 			public void onCallbackEvent(EALoadCallbackEvent eaLoadCallbackEvent) {
-				//TODO use java function
-				_open_file1(editor2.getId());
-				_open_file2(editor2.getId());
+				openFile1(editor2);
+				openFile2(editor2);
 			}
 		});
 		
@@ -272,41 +244,43 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		// Creation of a button that will show the content of the editor
 		Button b_editor2_openFile1 = new Button("open file 1", new ClickHandler(){
 			public void onClick(ClickEvent event) {
-				_open_file1(editor2.getId());
+				openFile1(editor2);
 			}
 		});
 		fpExample2.add(b_editor2_openFile1);
 		
 		Button b_editor2_openFile2 = new Button("open file 2", new ClickHandler(){
 			public void onClick(ClickEvent event) {
-				_open_file2(editor2.getId());
+				openFile2(editor2);
 			}
 		});
 		fpExample2.add(b_editor2_openFile2);
 		
 		Button b_editor2_closeFile1 = new Button("close file 1", new ClickHandler(){
 			public void onClick(ClickEvent event) {
-				_close_file1(editor2.getId());
+				editor2.closeFile("Filename1");
 			}
 		});
 		fpExample2.add(b_editor2_closeFile1);
 	}
 	
-	private static native void _open_file1(String id)/*-{
-		//TODO use java method
-		var new_file= {id: "to\\ é # € to", text: "$authors= array();\n$news= array();", syntax: 'php', title: 'beautiful title'};	
-		$wnd.editAreaLoader.openFile(id, new_file);
-	}-*/;
+	private void openFile1(SourceCodeEditor sce){
+		FileInfo fileInfo = FileInfo.create("Filename1", 
+				"beautiful title", 
+				"$authors= array();\n$news= array();", 
+				"php", 
+				"true");
+		sce.openFile(fileInfo);
+	}
 	
-	private static native void _open_file2(String id)/*-{
-		//TODO use java method
-		var new_file= {id: "Filename", text: "<a href=\"toto\">\n\tbouh\n</a>\n<!-- it's a comment -->", syntax: 'html'};
-		$wnd.editAreaLoader.openFile(id, new_file);
-	}-*/;
-	
-	private static native void _close_file1(String id)/*-{
-		$wnd.editAreaLoader.closeFile(id, "to\\ é # € to");
-	}-*/;
+	private void openFile2(SourceCodeEditor sce){
+		FileInfo fileInfo = FileInfo.create("Filename2", 
+				"Filename", 
+				"<a href=\"toto\">\n\tbouh\n</a>\n<!-- it's a comment -->", 
+				"html", 
+				"true");
+		sce.openFile(fileInfo);
+	}
 
 	private void initExample3(CaptionPanel example3){
 		VerticalPanel vpExemple3 = new VerticalPanel();
@@ -438,7 +412,7 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		editor4.setValue("import Blender\n" +
 				"class Python:\n\n" +
 				"	# Instancie un objet\n" +
-				"	# cls = la classe Python et non pas l'object instancié\n" +
+				"	# cls = la classe Python et non pas l'object instancie\n" +
 				"	def __new__(cls):\n" +
 				"		pass\n\n" +
 				"	# Constructeur de l'objet\n" +
@@ -447,16 +421,16 @@ public class SourceCodeEditorComponent implements EntryPoint {
 				"	# Destructeur\n" +
 				"	def __del__(self):\n" +
 				"		print \"Pourquoi tant de haine ?\"\n\n" +
-				"	# Utilisé pour : \"len(p)\"\n" +
+				"	# Utilise pour : \"len(p)\"\n" +
 				"	def __len__(self):\n" +
 				"		return len(self.items)\n\n" +
-				"	# Utilisé pour : \"p[x]\"\n" +
+				"	# Utilise pour : \"p[x]\"\n" +
 				"	def __getitem__(self, key):\n" +
 				"		return self.items[key]\n\n" +
-				"	# Utilisé pour : \"x in p\"\n" +
+				"	# Utilise pour : \"x in p\"\n" +
 				"	def __contains__(self, value):\n" +
 				"		return (value in self.items)\n\n" +
-				"	# Utilisé pour : \"for x in p\"\n" +
+				"	# Utilise pour : \"for x in p\"\n" +
 				"	def __iter__(self):\n" +
 				"		for x in self.items:\n" +
 				"			yield x\n");
@@ -479,71 +453,5 @@ public class SourceCodeEditorComponent implements EntryPoint {
 		vpExemple4.add(editor4);
 		example4.setContentWidget(vpExemple4);
 	}
-	
-	private void initExample5(CaptionPanel example5){
-		VerticalPanel vpExemple5 = new VerticalPanel();
-		vpExemple5.setWidth("100%");
-		vpExemple5.add(new HTML("<p>Auto-Completion</p>"));
-
-		// Initialize SourceCodeEditor 
-		final SourceCodeEditor editor5 = new SourceCodeEditor("en", // language
-				"php",	// syntax
-				"",		// syntaxSelectionAllow
-				true, 	// startHighlight
-				false, 	// isMultiFiles
-				400,	// minWidth
-				500,	// minHeight
-				"both", // allowResize
-				true,	// allowToggle
-				"autocompletion",		// plugins
-				"known",// browsers
-				"onload",// display
-				"search, autocompletion, go_to_line, fullscreen, |, undo, redo, |, select_font,|, change_smooth_selection, highlight, reset_highlight, word_wrap, |, help", // toolbar 
-				"",		// beginToolbar
-				"", 	// endToolbar
-				10,		// fontSize
-				"monospace", // fontFamily
-				"begin", // cursorPosition
-				false, // geckoSpellcheck
-				20, // maxUndo
-				false,	// fullScreen
-				true,	// isEditable
-				true,	// wordWrap
-				null,	// replaceTabBySpaces
-				false,	// debug
-				false,	// showLineColors
-				null	// additional Args
-				);
-		editor5.setValue("<?php	\n" +
-				"	$authors	= array();\n" +
-				"	$news		= array();\n" +
-				"	/* this is a long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long comment for showing word-wrap feature */\n" +
-				"	$query	= \"SELECT author, COUNT(id) as 'nb_news' FROM news_messages GROUP BY author\";\n" +
-				"	$result	= mysql_query($query, $DBnews);\n" +
-				"	while( $line = mysql_fetch_assoc($result) ){\n" +
-				"		$authors[$line[\"author\"]]	= $line[\"author\"];\n" +
-				"		$news[$line[\"author\"]] = $line['nb_news'];\n" +
-				"	}" +
-				"	$list= sprintf(\"('%s')\", implode(\"', '\", $authors));\n" +
-				"	$query=\"SELECT p.people_id, p.name, p.fname, p.status, team_name, t.leader_id=p.people_id as 'team_leader', w.name as 'wp_name', w.type\n" +
-				"					FROM people p, teams t, wppartis wp, wps w\n" +
-				"					WHERE p.people_id IN $list AND p.org_id=t.team_id AND wp.team_id=t.team_id AND wp.wp_id=w.wp_id\n" +
-				"					GROUP BY p.people_id\";\n" +
-				"	if(isset($_GET[\"order\"]) && $_GET[\"order\"]!=\"nb_news\")\n" +
-				"		$query.=\" ORDER BY \".$_GET[\"order\"];\n" +
-				"	$result=mysql_query($query, $DBkal);\n" +
-				"	while($line = mysql_fetch_assoc($result)){\n" +
-				"		printf(\"<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\", $line[\"name\"], $line[\"fname\"],\n" +
-				"			$news[$line[\"people_id\"]], $line[\"status\"], $line[\"team_name\"], ($line[\"team_leader\"]==\"1\")?\"yes\":\"no\", $line[\"type\"], $line[\"wp_name\"]);\n" +
-				"	}\n" +
-				"	printf(\"</table>\");\n" +
-				"?>\n");
-		editor5.setWidth("100%");
-		editor5.setHeight("500px");
-		
-		vpExemple5.add(editor5);
-		example5.setContentWidget(vpExemple5);
-	}
-	
 
 }

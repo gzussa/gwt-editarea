@@ -1,15 +1,15 @@
 package com.gz.gwt.ui.sourcecodeeditor.client.event;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
+import com.gz.gwt.ui.sourcecodeeditor.client.type.FileInfo;
 
 public class EAFileSwitchOffCallbackEvent extends GwtEvent<EAFileSwitchOffCallbackHandler>{
 	
-	private JavaScriptObject fileInfo;
+	private FileInfo fileInfo;
 	
 	public static Type<EAFileSwitchOffCallbackHandler> TYPE = new Type<EAFileSwitchOffCallbackHandler>();
 	
-	public EAFileSwitchOffCallbackEvent(JavaScriptObject fileInfo) {
+	public EAFileSwitchOffCallbackEvent(FileInfo fileInfo) {
 		super();
 		this.fileInfo = fileInfo;
 	}
@@ -26,6 +26,10 @@ public class EAFileSwitchOffCallbackEvent extends GwtEvent<EAFileSwitchOffCallba
 	@Override
 	protected void dispatch(EAFileSwitchOffCallbackHandler handler) {
 		handler.onCallbackEvent(this);		
+	}
+
+	public FileInfo getFileInfo() {
+		return fileInfo;
 	}
 
 }

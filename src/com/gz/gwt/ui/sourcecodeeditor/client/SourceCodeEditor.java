@@ -5,23 +5,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.ChangeCallbackEvent;
@@ -38,8 +25,6 @@ import com.gz.gwt.ui.sourcecodeeditor.client.event.EAInitCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EAInitCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EALoadCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EALoadCallbackHandler;
-import com.gz.gwt.ui.sourcecodeeditor.client.event.EAPluginKeyDownCallbackEvent;
-import com.gz.gwt.ui.sourcecodeeditor.client.event.EAPluginKeyDownCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EAToggleOffCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EAToggleOffCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.EAToggleOnCallbackEvent;
@@ -52,52 +37,81 @@ import com.gz.gwt.ui.sourcecodeeditor.client.event.SaveCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.SaveCallbackHandler;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.SubmitCallbackEvent;
 import com.gz.gwt.ui.sourcecodeeditor.client.event.SubmitCallbackHandler;
-import com.gz.gwt.ui.sourcecodeeditor.client.plugins.util.GWTWidgetUtil;
+import com.gz.gwt.ui.sourcecodeeditor.client.type.FileInfo;
 
 /**
  * A TextArea prepared to edit source code in a variety of formats.
  * @author gzussa
  */
-
-public class SourceCodeEditor extends Composite
-{
-	private final String id;
+public class SourceCodeEditor extends Composite {
+	
+	/* Config variables */
+	
 	private final String syntax;
+	
 	private final String language;
+	
 	private final String syntaxSelectionAllow;
+	
 	private final boolean startHighlight;
+	
 	private final boolean isMultiFiles;
+	
 	private final int minWidth;
+	
 	private final int minHeight;
+	
 	private final String allowResize;
+	
 	private final boolean allowToggle;
+	
 	private final String plugins;
+	
 	private final String browsers;
+	
 	private final String display;
+	
 	private final String toolbar;
+	
 	private final String beginToolbar;
+	
 	private final String endToolbar;
+	
 	private final int fontSize;
+	
 	private final String fontFamily;
+	
 	private final String cursorPosition;
+	
 	private final boolean geckoSpellcheck;
+	
 	private final int maxUndo;
+	
 	private final boolean fullScreen;
+	
 	private final boolean isEditable;
+	
 	private final boolean wordWrap;
+	
 	private final Integer replaceTabBySpaces;
+	
 	private final boolean debug;
+	
 	private final boolean showLineColors;
+	
 	private final Map<String, Object> additionalArgs;
 	
+	/* [end] Config variables */
+	
+	private final String id;
+	
 	public TextArea editAreaContent;
+	
 	private final VerticalPanel main = new VerticalPanel();
 
 	private boolean initialized = false;
-	private String text = "";
 	
-	//TODO Should be done by a plugin 
-	FlowPanel autoCompletionArea = new FlowPanel();
+	private String text = "";
 
 	/**
 	 * Constructs a SourceCodeEditor to edit code written in the specified syntax
@@ -130,7 +144,7 @@ public class SourceCodeEditor extends Composite
 				4,	// replaceTabBySpaces
 				false,	// debug
 				false,	// showLineColors
-				new HashMap() // Additional Agrs
+				null // Additional Agrs
 		); 
 	}
 	
@@ -184,17 +198,18 @@ public class SourceCodeEditor extends Composite
 		this.fullScreen = fullScreen;
 		this.isEditable = isEditable;
 		this.wordWrap = wordWrap;
-		if(replaceTabBySpaces != null)
+		if(replaceTabBySpaces != null){
 			this.replaceTabBySpaces = replaceTabBySpaces;
-		else
+		}else{
 			this.replaceTabBySpaces = 8;
+		}
 		this.debug = debug;
 		this.showLineColors = showLineColors;
-		if(additionalArgs != null)
+		if(additionalArgs != null){
 			this.additionalArgs = additionalArgs;
-		else
-			this.additionalArgs = new HashMap();
-		
+		}else{
+			this.additionalArgs = new HashMap<String, Object>();
+		}
 		this.id = DOM.createUniqueId();
 		this.editAreaContent = new TextArea();
 
@@ -213,13 +228,6 @@ public class SourceCodeEditor extends Composite
 		
 		editAreaContent.setHeight ("100%");
 		editAreaContent.setWidth  ("100%");
-		
-		//TODO should be done dynamically and for each plugin
-		autoCompletionArea.add(new Label("Test AutoCompletionArea"));
-		main.add(autoCompletionArea);
-		autoCompletionArea.setVisible(false);
-		
-		addEAPluginKeyDownCallbackHandler();
 	}
 
 
@@ -274,27 +282,29 @@ public class SourceCodeEditor extends Composite
 	 * @return The id
 	 */
 	public String getId(){
-		if(initialized)
-			return this.id; 
-		return null;
+		if(!initialized){ return null; }
+		
+		return this.id; 
 	}
+	
 	/** Gets the content shown in the editor     
 	 * @return the content of the editor 
 	 **/
 	public String getValue(){
-		if(initialized)
-			return _getValue(id); 
-		return text;
+		if(!initialized){ return text; }
+		
+		return _getValue(id); 
 	}
 
 	/** Sets the content shown in the editor
 	 * @param value the text to be shown in the editor 
 	 **/
 	public void setValue(String value){
-		if(initialized)
-			_setValue(id, value);
-		else 
+		if(initialized){
+			_setValue(id, value);	
+		}else{ 
 			text = value;
+		}
 	}
 
 	/** Sets the editor width.    
@@ -321,8 +331,9 @@ public class SourceCodeEditor extends Composite
 	 * @param closeTag 	The close tag
 	 */
 	public void insertTags(String openTag, String closeTag){
-		if(initialized)
-			_insertTags(id, openTag, closeTag); 
+		if(!initialized){ return; }
+		
+		_insertTags(id, openTag, closeTag); 
 	}
 
 	/**
@@ -330,9 +341,9 @@ public class SourceCodeEditor extends Composite
 	 * @return The text contained in the the selection range. 
 	 */
 	public String getSelectedText(){
-		if(initialized)
-			return _getSelectedText(id);
-		return null;
+		if(!initialized){ return null; }
+		
+		return _getSelectedText(id);
 	}
 	
 	/**
@@ -340,23 +351,23 @@ public class SourceCodeEditor extends Composite
 	 * @param text	The string that will replace the current selected text.
 	 */
 	public void setSelectedText(String text){
-		if(initialized)
-			_setSelectedText(id, text);
+		if(!initialized){ return; }
+			
+		_setSelectedText(id, text);
 	};
 	
 	/**
 	 * This method return the position start and position end of the selection range in the editor. Works on normal textarea if the EditArea is toggled off.
 	 * @return An array containing the index of the selection start and end. Array("start", "end")
 	 */
-	public Map getSelectionRange(){
-		Map result = new HashMap();
-		if(initialized){
-			int selectionRangesStart = _getSelectionRangeStart(id);
-			int selectionRangesEnd = _getSelectionRangeEnd(id);
-			result.put("start", selectionRangesStart);
-			result.put("end", selectionRangesEnd);
-			return result;
-		}
+	public Map<String, Integer> getSelectionRange(){
+		Map<String, Integer> result = new HashMap<String, Integer>();
+		if(!initialized){ return result; }
+			
+		int selectionRangesStart = _getSelectionRangeStart(id);
+		int selectionRangesEnd = _getSelectionRangeEnd(id);
+		result.put("start", selectionRangesStart);
+		result.put("end", selectionRangesEnd);
 		return result;
 	};
 	
@@ -366,8 +377,9 @@ public class SourceCodeEditor extends Composite
 	 * @param newEnd 	The character position determining the end of the selection range.
 	 */
 	public void setSelectionRange(int newStart, int newEnd){
-		if(initialized)
-			_setSelectionRange(id, newStart, newEnd);
+		if(!initialized){ return; }
+			
+		_setSelectionRange(id, newStart, newEnd);
 	};
 	
 	/**
@@ -377,25 +389,27 @@ public class SourceCodeEditor extends Composite
 	 * @return the value of the executed command or data.
 	 */
 	public JavaScriptObject execCommand(String command, Object commandParam){
-		if(initialized)
-			return _execCommand(id, command, commandParam);
-		return null;
+		if(!initialized){ return null; }
+			
+		return _execCommand(id, command, commandParam);
 	};
 	
 	/**
 	 * Delete an instance of EditArea and restore simple textarea.
 	 */
 	public void deleteInstance(){
-		if(initialized)
-			_deleteInstance(id);
+		if(!initialized){ return; }
+		
+		_deleteInstance(id);
 	};
 	
 	/**
 	 * Hide a textarea and it's related EditArea.
 	 */
 	public void hide(){
-		if(initialized)
-			_hide(id);
+		if(!initialized){ return; }
+		
+		_hide(id);
 	};
 	
 	/**
@@ -403,32 +417,34 @@ public class SourceCodeEditor extends Composite
 	 * @param id	The id of the converted textarea.
 	 */
 	public void show(){
-		if(initialized)
-			_show(id);
+		if(!initialized){ return; }
+		
+		_show(id);
 	};
 	
 	/**
 	 * Restore a textarea and it's related EditArea hidden with the hide() function.
 	 * @param fileInfos	
-	 * An object containing datas of the file that will be openned. Here are the main fields (for the other possible fields see the returned Object of the getFile function):
+	 * An object containing datas of the file that will be opened. Here are the main fields (for the other possible fields see the returned Object of the getFile function):
      * - id : (required) A string that will identify the file. it's the only required field.
      * Type: String
-     * - title : (optionnal) The title that will be displayed in the tab area.
+     * - title : (optional) The title that will be displayed in the tab area.
      * Type: String
      * Default: set with the id field value
-     * - text : (optionnal) The text content of the file.
+     * - text : (optional) The text content of the file.
      * Type: String
      * Default: ""
-     * - syntax : (optionnal) The syntax to use for this file.
+     * - syntax : (optional) The syntax to use for this file.
      * Type: String
      * Default: ""
-     * - do_highlight : (optionnal) Set if the file should start highlighted or not
+     * - do_highlight : (optional) Set if the file should start highlighted or not
      * Type: String
      * Default: ""
 	 */
-	public void openFile(String[] fileInfos){
-		if(initialized)
-			_openFile(id, fileInfos);
+	public void openFile(FileInfo fileInfo){
+		if(!initialized){ return; }
+			
+		_openFile(id, fileInfo);
 	};
 	
 	/**
@@ -437,9 +453,9 @@ public class SourceCodeEditor extends Composite
 	 * @return An object containing datas related to the file.
 	 */
 	public JavaScriptObject getCurrentFile(){
-		if(initialized)
-			return _getCurrentFile(id);
-		return null;
+		if(!initialized){ return null; }
+		
+		return _getCurrentFile(id);
 	};
 	
 	/**
@@ -448,9 +464,9 @@ public class SourceCodeEditor extends Composite
 	 * @return An object containing datas related to the file.
 	 */
 	public JavaScriptObject getFile(String fileId){
-		if(initialized)
-			return _getFile(id, fileId);
-		return null;
+		if(!initialized){ return null; }
+		
+		return _getFile(id, fileId);
 	};
 	
 	/**
@@ -458,9 +474,9 @@ public class SourceCodeEditor extends Composite
 	 * @return An object containing datas of each files
 	 */
 	public JavaScriptObject getAllFiles(){
-		if(initialized)
-			return _getAllFiles(id);
-		return null;
+		if(!initialized){ return null; }
+		
+		return _getAllFiles(id);
 	};
 	
 	/**
@@ -468,8 +484,9 @@ public class SourceCodeEditor extends Composite
 	 * @param fileId	The id of the file to close.
 	 */
 	public void closeFile(String fileId){
-		if(initialized)
-			_closeFile(id, fileId);
+		if(!initialized){ return; }
+		
+		_closeFile(id, fileId);
 	};
 	
 	/**
@@ -478,9 +495,31 @@ public class SourceCodeEditor extends Composite
 	 * @param editedMode A boolean that indicate if the file should be set edited or not edited.
 	 */
 	public void setFileEditedMode(String fileId, boolean editedMode){
-		if(initialized)
-			_setFileEditedMode(id, fileId, editedMode);
+		if(!initialized){ return; }
+			
+		_setFileEditedMode(id, fileId, editedMode);
 	};
+	
+	/** 
+	 * Switch the editable mode whenever you want 
+	 * (code example for a toggle edit mode: editAreaLoader.execCommand('editor_id', 'set_editable', !editAreaLoader.execCommand('editor_id', 'is_editable'));). 
+	 */
+	public void toggleEditable(){
+		if(!initialized){ return; }
+			
+		_toggleEditable(id);
+	};
+	
+
+	private void setAdditionalAgrs(){
+		if(!additionalArgs.isEmpty()){
+			for(Iterator<String> it = additionalArgs.keySet().iterator(); it.hasNext();){
+				String argName = (String)it.next();
+				Object argValue = additionalArgs.get(argName);
+				_setAdditionalArg(id, argName, argValue);				
+			}
+		}
+	}
 	
 	/* Encapsulated native code */
 	/**
@@ -645,19 +684,15 @@ public class SourceCodeEditor extends Composite
    		}
    		
    		$wnd[EA_file_switch_on_callback_function_name] = function(fileInfo) {
-     			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAFileSwitchOnCallback(Lcom/google/gwt/core/client/JavaScriptObject;)(fileInfo);
+     			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAFileSwitchOnCallback(Lcom/gz/gwt/ui/sourcecodeeditor/client/type/FileInfo;)(fileInfo);
    		}
    		
    		$wnd[EA_file_switch_off_callback_function_name] = function(fileInfo) {
-     			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAFileSwitchOffCallback(Lcom/google/gwt/core/client/JavaScriptObject;)(fileInfo);
+     			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAFileSwitchOffCallback(Lcom/gz/gwt/ui/sourcecodeeditor/client/type/FileInfo;)(fileInfo);
    		}
    		
    		$wnd[EA_file_close_callback_function_name] = function(fileInfo) {
-     			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAFileCloseCallback(Lcom/google/gwt/core/client/JavaScriptObject;)(fileInfo);
-   		}
-   		
-   		$wnd["EAAutoCompletionKeyDownCallback"] = function(){
-   			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAAutoCompletionKeyDownCallback(Ljava/lang/String;)(id);
+     			handler.@com.gz.gwt.ui.sourcecodeeditor.client.SourceCodeEditor::EAFileCloseCallback(Lcom/gz/gwt/ui/sourcecodeeditor/client/type/FileInfo;)(fileInfo);
    		}
    		
 	}-*/;
@@ -713,10 +748,24 @@ public class SourceCodeEditor extends Composite
 	 * @param id	The id of the converted textarea
 	 * @return An array containing the index of the selection start and end. Array("start", "end")
 	 */
-	//TODO use overlay type
+	private static native JsArray<JavaScriptObject> _getSelectionRange(String id)/*-{
+		return $wnd.editAreaLoader.getSelectionRange(id);
+	}-*/;
+	
+	/**
+	 * This method return the start position of the selection range in the editor. Works on normal textarea if the EditArea is toggled off.
+	 * @param id	The id of the converted textarea
+	 * @return selection range start position
+	 */
 	private static native int _getSelectionRangeStart(String id)/*-{
 		return $wnd.editAreaLoader.getSelectionRange(id).start;
 	}-*/;
+	
+	/**
+	 * This method return the end position of the selection range in the editor. Works on normal textarea if the EditArea is toggled off.
+	 * @param id	The id of the converted textarea
+	 * @return selection range end position
+	 */
 	private static native int _getSelectionRangeEnd(String id)/*-{
 		return $wnd.editAreaLoader.getSelectionRange(id).end;
 	}-*/;
@@ -770,24 +819,24 @@ public class SourceCodeEditor extends Composite
 	 * Restore a textarea and it's related EditArea hidden with the hide() function.
 	 * @param id	The id of the converted textarea.
 	 * @param fileInfos	
-	 * An object containing datas of the file that will be openned. Here are the main fields (for the other possible fields see the returned Object of the getFile function):
+	 * An object containing datas of the file that will be opened. Here are the main fields (for the other possible fields see the returned Object of the getFile function):
      * - id : (required) A string that will identify the file. it's the only required field.
      * Type: String
-     * - title : (optionnal) The title that will be displayed in the tab area.
+     * - title : (optional) The title that will be displayed in the tab area.
      * Type: String
      * Default: set with the id field value
-     * - text : (optionnal) The text content of the file.
+     * - text : (optional) The text content of the file.
      * Type: String
      * Default: ""
-     * - syntax : (optionnal) The syntax to use for this file.
+     * - syntax : (optional) The syntax to use for this file.
      * Type: String
      * Default: ""
-     * - do_highlight : (optionnal) Set if the file should start highlighted or not
+     * - do_highlight : (optional) Set if the file should start highlighted or not
      * Type: String
      * Default: ""
 	 */
-	private static native void _openFile(String id, String[] fileInfos)/*-{
-		$wnd.editAreaLoader.openFile(id, fileInfos);
+	private static native void _openFile(String id, FileInfo fileInfo)/*-{
+		$wnd.editAreaLoader.openFile(id, fileInfo);
 	}-*/;
 	
 	/**
@@ -836,7 +885,23 @@ public class SourceCodeEditor extends Composite
 	private static native void _setFileEditedMode(String id, String fileId, boolean editedMode)/*-{
 		$wnd.editAreaLoader.setFileEditedMode(id, fileId, editedMode);
 	}-*/;
-
+	
+	/**
+	 * Switch the editable mode whenever you want 
+	 * (code example for a toggle edit mode: editAreaLoader.execCommand('editor_id', 'set_editable', !editAreaLoader.execCommand('editor_id', 'is_editable'));). 
+	 * @param id		The id of the converted textarea.
+	 */
+	private static native void _toggleEditable(String id)/*-{
+		$wnd.editAreaLoader.execCommand(id, 'set_editable', !$wnd.editAreaLoader.execCommand(id, 'is_editable'));
+	}-*/;
+	
+	private static native void _setFileEditedMode(String id, String argName, Object argValue)/*-{
+		$wnd.editAreaLoader.setFileEditedMode(id, fileId, editedMode);
+	}-*/;
+	
+	private static native void _setAdditionalArg(String id, String argName, Object argValue)/*-{
+		$wnd.editAreas[id].settings[argName] = argValue;
+	}-*/;
 	
 	/* Listeners */
 	public void addLoadCallbackHandler(LoadCallbackHandler handler) {
@@ -892,105 +957,111 @@ public class SourceCodeEditor extends Composite
 	}
 	
 	/*Callback functions*/
+	/**
+	 * Function that will be called when the user will press the "load" button in the toolbar. This function will reveice one parameter that will be the id of the textarea. You can update the content of the textarea by using "editAreaLoader.setValue(the_id, new_value);".
+	 * @param id
+	 */
 	public void loadCallback(String id){
 		fireEvent(new LoadCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when the user will press the "save" button in the toolbar. This function will reveice two parameters, the first being the id of the textarea and the second containing the content of the textarea. 
+	 * @param id
+	 * @param content
+	 */
 	public void saveCallback(String id, String content){
 		fireEvent(new SaveCallbackEvent(id, content));
 	}
 	
+	/**
+	 * Function that will be called when the onchange event of the textarea of EditArea will be triggered. This function will reveice one parameter that will be the id of the textarea. Will be triggered only is EditArea is displayed. 
+	 * @param id
+	 */
 	public void changeCallback(String id){
 		fireEvent(new ChangeCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when the form containing the EditArea will be submitted. This function will reveice one parameter that will be the id of the textarea. Will be triggered regardless the state of EditArea (displayed or not). 
+	 * @param id
+	 */
 	public void submitCallback(String id){
 		fireEvent(new SubmitCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called just after the editAreaLoader.init() function, once EditAreaLoader will be initalized but still not displayed. This function will receive one parameter that will be the id of the textarea. 
+	 * @param id
+	 */
 	public void EAInitCallback(String id){
 		// We set Additional Args
 		setAdditionalAgrs();
 		fireEvent(new EAInitCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when EditArea will be destroyed regardless the fact that it has been displayed or not. This function will reveice one parameter that will be the id of the textarea. 
+	 * @param id
+	 */
 	public void EADeleteCallback(String id){
 		fireEvent(new EADeleteCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when EditArea will be toogled on for. This function will reveice one parameter that will be the id of the textarea. 
+	 * @param id
+	 */
 	public void EAToggleOnCallback(String id){
 		fireEvent(new EAToggleOnCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when EditArea will be toggled off. This function will reveice one parameter that will be the id of the textarea. 
+	 * @param id
+	 */
 	public void EAToggleOffCallback(String id){
 		fireEvent(new EAToggleOffCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when EditArea will be displayed for the first time. This function will reveice one parameter that will be the id of the textarea. 
+	 * @param id
+	 */
 	public void EALoadCallback(String id){
 		fireEvent(new EALoadCallbackEvent(id));
 	}
 	
+	/**
+	 * Function that will be called when EditArea will be destroyed (if it have been displayed at least one time). This function will reveice one parameter that will be the id of the textarea. 
+	 * @param id
+	 */
 	public void EAUnloadCallback(String id){
 		fireEvent(new EAUnloadCallbackEvent(id));
 	}
 	
-	public void EAFileSwitchOnCallback(JavaScriptObject fileInfo){
+	/**
+	 * Function that will be called when the tabulation of the file will be selected. This function will reveice one parameter that will be an associative array containing all file's infos. 
+	 * @param fileInfo
+	 */
+	public void EAFileSwitchOnCallback(FileInfo fileInfo){
 		fireEvent(new EAFileSwitchOnCallbackEvent(fileInfo));
 	}
 	
-	public void EAFileSwitchOffCallback(JavaScriptObject fileInfo){
+	/**
+	 * Function that will be called when the tabulation of the file will be blur (the file was selected, and another file receive focus). This function will reveice one parameter that will be an associative array containing all file infos. 
+	 * @param fileInfo
+	 */
+	public void EAFileSwitchOffCallback(FileInfo fileInfo){
 		fireEvent(new EAFileSwitchOffCallbackEvent(fileInfo));	
 	}
 	
-	public void EAFileCloseCallback(JavaScriptObject fileInfo){
+	/**
+	 * Function that will be called when the tabulation of a file will be closed. This function will reveice one parameter that will be an associative array containing all file infos. If the callback function return false, the file won't be closed. 
+	 * @param fileInfo
+	 */
+	public void EAFileCloseCallback(FileInfo fileInfo){
 		fireEvent(new EAFileCloseCallbackEvent(fileInfo));
 	}
 	
-	//TODO Should be added in a separate file
-	public void EAAutoCompletionKeyDownCallback(String id){
-		fireEvent(new EAPluginKeyDownCallbackEvent("autocompletion", id));
-	}
-	
-	private void setAdditionalAgrs(){
-		if(!additionalArgs.isEmpty()){
-			for(Iterator<String> it = additionalArgs.keySet().iterator(); it.hasNext();){
-				String argName = (String)it.next();
-				Object argValue = additionalArgs.get(argName);
-				_setAdditionalArg(id, argName, argValue);				
-			}
-		}
-	}
-
-	private static native void _setFileEditedMode(String id, String argName, Object argValue)/*-{
-		$wnd.editAreaLoader.setFileEditedMode(id, fileId, editedMode);
-	}-*/;
-	
-	private static native void _setAdditionalArg(String id, String argName, Object argValue)/*-{
-		$wnd.editAreas[id].settings[argName] = argValue;
-	}-*/;
-	
-//	private static native int _getCursorPositionLeft()/*-{
-//		return $wnd.editAreas[id].textarea.cursor_left;
-//	}-*/;
-	
-	//TODO should call even on every plugin
-	//init callback
-	//load callback 
-	//get_control_html callback
-	//execCommand callback
-	public void addEAPluginKeyDownCallbackHandler() {
-		addHandler(new EAPluginKeyDownCallbackHandler(){
-
-			@Override
-			public void onCallbackEvent(EAPluginKeyDownCallbackEvent event) {
-				System.out.println("id = "+event.getId()+" | getAbsoluteTop = "+getAbsoluteTop());
-				Element textarea = DOM.getElementById("textarea");
-				GWTWidgetUtil.setWidgetPosition(autoCompletionArea, getAbsoluteLeft(), getAbsoluteTop());
-				autoCompletionArea.setVisible(true);
-			}
-			
-		}, EAPluginKeyDownCallbackEvent.getType());
-	}
-
-
 }

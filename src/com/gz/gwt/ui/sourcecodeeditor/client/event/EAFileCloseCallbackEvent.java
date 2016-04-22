@@ -1,15 +1,15 @@
 package com.gz.gwt.ui.sourcecodeeditor.client.event;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
+import com.gz.gwt.ui.sourcecodeeditor.client.type.FileInfo;
 
 public class EAFileCloseCallbackEvent extends GwtEvent<EAFileCloseCallbackHandler>{
 	
-	private JavaScriptObject fileInfo;
+	private FileInfo fileInfo;
 	
 	public static Type<EAFileCloseCallbackHandler> TYPE = new Type<EAFileCloseCallbackHandler>();
 	
-	public EAFileCloseCallbackEvent(JavaScriptObject fileInfo) {
+	public EAFileCloseCallbackEvent(FileInfo fileInfo) {
 		super();
 		this.fileInfo = fileInfo;
 	}
@@ -28,4 +28,8 @@ public class EAFileCloseCallbackEvent extends GwtEvent<EAFileCloseCallbackHandle
 		handler.onCallbackEvent(this);		
 	}
 
+	public FileInfo getFileInfo() {
+		return fileInfo;
+	}
+	
 }
